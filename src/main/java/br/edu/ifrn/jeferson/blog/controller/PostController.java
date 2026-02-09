@@ -22,7 +22,7 @@ public class PostController {
 
     @PostMapping
     public ResponseEntity<PostDTO> create(@Valid @RequestBody CreatePostDTO dto) {
-        return ResponseEntity.ok(service.create(dto));
+        return ResponseEntity.status(201).body(service.create(dto));
     }
 
     @GetMapping

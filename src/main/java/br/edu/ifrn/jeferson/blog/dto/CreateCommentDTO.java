@@ -13,8 +13,10 @@ public class CreateCommentDTO {
     @NotNull
     private Long authorId;
 
+    private Long parentId;
+
     public CreateCommentDTO() {}
-    // getters e setters
+
     public String getContent() { return content; }
     public void setContent(String content) { this.content = content; }
 
@@ -23,4 +25,7 @@ public class CreateCommentDTO {
 
     public Long getAuthorId() { return authorId; }
     public void setAuthorId(Long authorId) { this.authorId = authorId; }
+
+    public Long getParentId() { return parentId; }
+    public void setParentId(Long parentId) { this.parentId = parentId; }
 }

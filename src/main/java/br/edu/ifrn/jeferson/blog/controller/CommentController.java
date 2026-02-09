@@ -22,12 +22,17 @@ public class CommentController {
 
     @PostMapping
     public ResponseEntity<CommentDTO> create(@Valid @RequestBody CreateCommentDTO dto) {
-        return ResponseEntity.ok(service.create(dto));
+        return ResponseEntity.status(201).body(service.create(dto));
     }
 
     @GetMapping
     public ResponseEntity<List<CommentDTO>> findAll() {
         return ResponseEntity.ok(service.findAll());
+    }
+
+    @GetMapping("/post/{postId}")
+    public ResponseEntity<List<CommentDTO>> findByPostId(@PathVariable Long postId) {
+        return ResponseEntity.ok(service.findByPostId(postId));
     }
 
     @GetMapping("/{id}")

@@ -31,12 +31,26 @@ public class CommentService {
     public CommentDTO create(CreateCommentDTO dto) {
         Posts post = postRepo.findById(dto.getPostId())
                 .orElseThrow(() -> new ResourceNotFoundException("Post not found: " + dto.getPostId()));
+
         Users author = userRepo.findById(dto.getAuthorId())
                 .orElseThrow(() -> new ResourceNotFoundException("Author not found: " + dto.getAuthorId()));
+
+        Comments parent = null;
+        if (dto.getParentId() != null) {
+            parent = commentRepo.findById(dto.getParentId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Parent comment not found: " + dto.getParentId()));
+
+            if (!parent.getPost().getId().equals(post.getId())) {
+                throw new IllegalArgumentException("Parent comment must belong to the same post");
+            }
+        }
+
         Comments c = new Comments();
         c.setContent(dto.getContent());
         c.setPost(post);
         c.setAuthor(author);
+        c.setParent(parent);
+
         commentRepo.save(c);
         return toDTO(c);
     }
@@ -45,24 +59,32 @@ public class CommentService {
         return commentRepo.findAll().stream().map(this::toDTO).collect(Collectors.toList());
     }
 
+    public List<CommentDTO> findByPostId(Long postId) {
+        return commentRepo.findByPostId(postId).stream().map(this::toDTO).collect(Collectors.toList());
+    }
+
     public CommentDTO findById(Long id) {
         return commentRepo.findById(id).map(this::toDTO)
                 .orElseThrow(() -> new ResourceNotFoundException("Comment not found: " + id));
     }
 
     public CommentDTO update(Long id, UpdateCommentDTO dto) {
-        Comments c = commentRepo.findById(id).orElseThrow(() -> new ResourceNotFoundException("Comment not found: " + id));
+        Comments c = commentRepo.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Comment not found: " + id));
+
         c.setContent(dto.getContent());
         commentRepo.save(c);
         return toDTO(c);
     }
 
     public void delete(Long id) {
-        Comments c = commentRepo.findById(id).orElseThrow(() -> new ResourceNotFoundException("Comment not found: " + id));
+        Comments c = commentRepo.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Comment not found: " + id));
         commentRepo.delete(c);
     }
 
     private CommentDTO toDTO(Comments c) {
-        return new CommentDTO(c.getId(), c.getContent(), c.getPost().getId(), c.getAuthor().getId());
+        Long parentId = (c.getParent() != null) ? c.getParent().getId() : null;
+        return new CommentDTO(c.getId(), c.getContent(), c.getPost().getId(), c.getAuthor().getId(), parentId);
     }
 }
