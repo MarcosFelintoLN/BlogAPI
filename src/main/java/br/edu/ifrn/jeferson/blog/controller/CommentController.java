@@ -6,6 +6,7 @@ import jakarta.validation.Valid;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 import java.util.List;
 
@@ -41,11 +42,13 @@ public class CommentController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("@authz.canEditComment(#id, authentication)")
     public ResponseEntity<CommentDTO> update(@PathVariable Long id, @Valid @RequestBody UpdateCommentDTO dto) {
         return ResponseEntity.ok(service.update(id, dto));
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("@authz.canDeleteComment(#id, authentication)")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         service.delete(id);
         return ResponseEntity.noContent().build();
