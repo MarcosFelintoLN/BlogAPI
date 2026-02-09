@@ -8,6 +8,8 @@ import br.edu.ifrn.jeferson.blog.models.Users;
 import br.edu.ifrn.jeferson.blog.repository.CommentRepository;
 import br.edu.ifrn.jeferson.blog.repository.PostRepository;
 import br.edu.ifrn.jeferson.blog.repository.UserRepository;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -32,8 +34,7 @@ public class CommentService {
         Posts post = postRepo.findById(dto.getPostId())
                 .orElseThrow(() -> new ResourceNotFoundException("Post not found: " + dto.getPostId()));
 
-        Users author = userRepo.findById(dto.getAuthorId())
-                .orElseThrow(() -> new ResourceNotFoundException("Author not found: " + dto.getAuthorId()));
+        Users author = getAuthenticatedUser();
 
         Comments parent = null;
         if (dto.getParentId() != null) {
@@ -81,6 +82,19 @@ public class CommentService {
         Comments c = commentRepo.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Comment not found: " + id));
         commentRepo.delete(c);
+    }
+
+    private Users getAuthenticatedUser() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+
+        if (auth == null || auth.getName() == null) {
+            throw new IllegalArgumentException("Usuário não autenticado");
+        }
+
+        String email = auth.getName();
+
+        return userRepo.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found by email: " + email));
     }
 
     private CommentDTO toDTO(Comments c) {
