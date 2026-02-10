@@ -5,6 +5,7 @@ import br.edu.ifrn.jeferson.blog.exception.ResourceNotFoundException;
 import br.edu.ifrn.jeferson.blog.models.Users;
 import br.edu.ifrn.jeferson.blog.models.Role;
 import br.edu.ifrn.jeferson.blog.repository.UserRepository;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,9 +17,11 @@ import java.util.stream.Collectors;
 public class UserService {
 
     private final UserRepository repo;
+    private final PasswordEncoder passwordEncoder;
 
-    public UserService(UserRepository repo) {
+    public UserService(UserRepository repo, PasswordEncoder passwordEncoder) {
         this.repo = repo;
+        this.passwordEncoder = passwordEncoder;
     }
 
     public UserDTO create(CreateUserDTO dto) {
@@ -29,7 +32,7 @@ public class UserService {
         Users user = new Users();
         user.setName(dto.getName());
         user.setEmail(dto.getEmail());
-        user.setPassword(dto.getPassword()); // opcional: encriptar senha
+        user.setPassword(passwordEncoder.encode(dto.getPassword()));
         user.setRole(Role.USER);
 
         repo.save(user);
@@ -37,15 +40,11 @@ public class UserService {
     }
 
     public List<UserDTO> findAll() {
-        return repo.findAll()
-                .stream()
-                .map(this::toDTO)
-                .collect(Collectors.toList());
+        return repo.findAll().stream().map(this::toDTO).collect(Collectors.toList());
     }
 
     public UserDTO findById(Long id) {
-        return repo.findById(id)
-                .map(this::toDTO)
+        return repo.findById(id).map(this::toDTO)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found: " + id));
     }
 
@@ -57,7 +56,7 @@ public class UserService {
         user.setEmail(dto.getEmail());
 
         if (dto.getPassword() != null && !dto.getPassword().isBlank()) {
-            user.setPassword(dto.getPassword());
+            user.setPassword(passwordEncoder.encode(dto.getPassword()));
         }
 
         repo.save(user);
@@ -67,7 +66,6 @@ public class UserService {
     public void delete(Long id) {
         Users user = repo.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found: " + id));
-
         repo.delete(user);
     }
 

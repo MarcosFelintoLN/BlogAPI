@@ -6,6 +6,8 @@ import br.edu.ifrn.jeferson.blog.models.Posts;
 import br.edu.ifrn.jeferson.blog.models.Users;
 import br.edu.ifrn.jeferson.blog.repository.PostRepository;
 import br.edu.ifrn.jeferson.blog.repository.UserRepository;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,12 +27,13 @@ public class PostService {
     }
 
     public PostDTO create(CreatePostDTO dto) {
-        Users author = userRepo.findById(dto.getAuthorId())
-                .orElseThrow(() -> new ResourceNotFoundException("Author not found: " + dto.getAuthorId()));
+        Users author = getAuthenticatedUser();
+
         Posts p = new Posts();
         p.setTitle(dto.getTitle());
         p.setContent(dto.getContent());
         p.setAuthor(author);
+
         postRepo.save(p);
         return toDTO(p);
     }
@@ -45,16 +48,30 @@ public class PostService {
     }
 
     public PostDTO update(Long id, UpdatePostDTO dto) {
-        Posts p = postRepo.findById(id).orElseThrow(() -> new ResourceNotFoundException("Post not found: " + id));
+        Posts p = postRepo.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Post not found: " + id));
+
         p.setTitle(dto.getTitle());
         p.setContent(dto.getContent());
         postRepo.save(p);
+
         return toDTO(p);
     }
 
     public void delete(Long id) {
-        Posts p = postRepo.findById(id).orElseThrow(() -> new ResourceNotFoundException("Post not found: " + id));
+        Posts p = postRepo.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Post not found: " + id));
         postRepo.delete(p);
+    }
+
+    private Users getAuthenticatedUser() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || auth.getName() == null) {
+            throw new IllegalArgumentException("Unauthenticated user");
+        }
+        String email = auth.getName();
+        return userRepo.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found by email: " + email));
     }
 
     private PostDTO toDTO(Posts p) {

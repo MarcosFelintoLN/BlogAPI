@@ -2,9 +2,8 @@ package br.edu.ifrn.jeferson.blog.models;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
-import br.edu.ifrn.jeferson.blog.models.Users;
-import br.edu.ifrn.jeferson.blog.models.Posts;
-
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "comments")
@@ -25,6 +24,13 @@ public class Comments {
     @JoinColumn(name = "author_id", nullable = false)
     private Users author;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "parent_id")
+    private Comments parent;
+
+    @OneToMany(mappedBy = "parent", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Comments> replies = new ArrayList<>();
+
     private LocalDateTime createdAt = LocalDateTime.now();
 
     // getters e setters
@@ -39,6 +45,12 @@ public class Comments {
 
     public Users getAuthor() { return author; }
     public void setAuthor(Users author) { this.author = author; }
+
+    public Comments getParent() { return parent; }
+    public void setParent(Comments parent) { this.parent = parent; }
+
+    public List<Comments> getReplies() { return replies; }
+    public void setReplies(List<Comments> replies) { this.replies = replies; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
